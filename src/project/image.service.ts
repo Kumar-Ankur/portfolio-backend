@@ -10,8 +10,7 @@ export class ImageService implements MulterOptionsFactory {
   gridFsStorage: GridfsStorage;
   constructor() {
     this.gridFsStorage = new GridfsStorage({
-      url:
-        'mongodb+srv://root:root@cluster0.vf3fg.mongodb.net/portfolio?retryWrites=true&w=majority',
+      url: process.env.MONGODB_URI,
       file: (req, file) => {
         return new Promise((resolve, reject) => {
           const fileName = file.originalname.trim();
