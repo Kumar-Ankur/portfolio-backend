@@ -6,6 +6,7 @@ import { EducationModule } from './education/education.module';
 import { OfficialModule } from './official/official.module';
 import { AuthModule } from './auth/auth.module';
 import { ProjectModule } from './project/project.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ProjectModule } from './project/project.module';
     OfficialModule,
     AuthModule,
     ProjectModule,
+    ContactModule,
   ],
   providers: [],
 })
