@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProjectSchema } from './project.model';
 import { MulterModule } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
+import { ImageController } from './image.controller';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { ImageService } from './image.service';
     }),
   ],
   providers: [ImageService, ProjectService],
-  controllers: [ProjectController],
+  controllers: [ProjectController, ImageController],
 })
 export class ProjectModule {}

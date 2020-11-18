@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ProjectDTO {
   @IsString()
@@ -9,6 +9,11 @@ export class ProjectDTO {
   @IsString()
   @ApiProperty()
   title: string;
+
+  @IsString()
+  @ApiProperty()
+  @IsOptional()
+  imageId: string;
 }
 
 export class FileInfoVm {
