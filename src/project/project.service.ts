@@ -9,10 +9,16 @@ export class ProjectService {
     @InjectModel('project') private readonly projectModel: Model<ProjectModel>,
   ) {}
 
-  async saveNewProject(url: string, title: string, imageId: string) {
+  async saveNewProject(
+    url: string,
+    title: string,
+    description: string,
+    imageId: string,
+  ) {
     const newProject = new this.projectModel({
       url,
       title,
+      description,
       imageId,
     });
     const project = newProject.save();
@@ -28,6 +34,7 @@ export class ProjectService {
     projectId: string,
     url: string,
     title: string,
+    description: string,
     imageId: string,
   ) {
     const project = await this.findProject(projectId);
@@ -36,6 +43,9 @@ export class ProjectService {
     }
     if (title) {
       project.title = title;
+    }
+    if (description) {
+      project.description = description;
     }
     if (imageId) {
       project.imageId = imageId;

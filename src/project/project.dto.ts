@@ -12,6 +12,10 @@ export class ProjectDTO {
 
   @IsString()
   @ApiProperty()
+  description: string;
+
+  @IsString()
+  @ApiProperty()
   @IsOptional()
   imageId: string;
 }

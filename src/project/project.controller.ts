@@ -32,10 +32,11 @@ export class ProjectController {
     type: ProjectDTO,
   })
   async addNewProject(@Body() project: ProjectModel) {
-    const { url, title, imageId } = project;
+    const { url, title, description, imageId } = project;
     const newProject = await this.projectService.saveNewProject(
       url,
       title,
+      description,
       imageId,
     );
     return newProject;
@@ -74,11 +75,12 @@ export class ProjectController {
     @Param('id') projectId: string,
     @Body() project: ProjectModel,
   ) {
-    const { url, title, imageId } = project;
+    const { url, title, description, imageId } = project;
     const updatedProject = await this.projectService.updateProject(
       projectId,
       url,
       title,
+      description,
       imageId,
     );
     return updatedProject;
