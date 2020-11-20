@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OfficialDTO } from './official.dto';
@@ -51,7 +52,8 @@ export class OfficialController {
     description: 'Official project fetched successfully',
     type: [OfficialDTO],
   })
-  async getOfficialProject() {
+  async getOfficialProject(@Req() req: any) {
+    console.log(req.headers.referer);
     const fetchedProject = await this.officialService.fetchedProject();
     return fetchedProject;
   }

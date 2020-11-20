@@ -4,7 +4,7 @@ import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EducationModule } from './education/education.module';
 import { OfficialModule } from './official/official.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './login/login.module';
 import { ProjectModule } from './project/project.module';
 import { ContactModule } from './contact/contact.module';
 

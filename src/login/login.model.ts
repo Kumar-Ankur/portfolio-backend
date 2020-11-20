@@ -1,11 +1,11 @@
 import * as mongoose from 'mongoose';
 
-export const AuthSchema = new mongoose.Schema({
+export const LoginSchema = new mongoose.Schema({
   userid: String,
   password: String,
 });
 
-export interface AuthModel extends mongoose.Document {
+export interface LoginModel extends mongoose.Document {
   userid: string;
   password: string;
 }
