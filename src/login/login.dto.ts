@@ -9,4 +9,8 @@ export class LoginDTO {
   @IsString()
   @ApiProperty()
   password: string;
+
+  @IsString()
+  @ApiProperty()
+  email: string;
 }

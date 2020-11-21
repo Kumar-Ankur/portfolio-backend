@@ -1,52 +1,90 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LoginModel } from './login.model';
+import { AuthService } from 'src/auth/auth.service';
+import { LoginModel, RegisterModel } from './login.model';
 
 @Injectable()
 export class LoginService {
   constructor(
+    @InjectModel('Login') private readonly registerModel: Model<RegisterModel>,
     @InjectModel('Login') private readonly loginModel: Model<LoginModel>,
+    private authService: AuthService,
   ) {}
 
-  async createdLogin(userid: string, password: string) {
-    const newLogin = new this.loginModel({ userid, password });
-    const result = newLogin.save();
-    return result;
+  async registerUser(userid: string, pass: string, email: string) {
+    const getLoginData = await this.findUserByEmail(email);
+    if (getLoginData) {
+      return {
+        message: 'Email Id Already Registered',
+      };
+    }
+    const passwordHash = await this.authService.hashPassword(pass);
+    const newLogin = new this.registerModel();
+    newLogin.userid = userid;
+    newLogin.password = passwordHash;
+    newLogin.email = email;
+    const result = await newLogin.save();
+    return {
+      message: 'User credential has been saved successfully',
+      userid: result.userid,
+      email: result.email,
+      _id: result.id,
+    };
   }
 
-  async getLoginData() {
-    const getData = await this.loginModel.find();
-    return getData;
+  async loginUser(loginData: LoginModel) {
+    const { email, password } = loginData;
+    const getLoggedInUser = await this.findUserByEmail(email);
+    if (!getLoggedInUser) {
+      return {
+        message: 'Email id does not exists, please register',
+      };
+    }
+
+    const isValidUser = await this.authService.comparePasswords(
+      password,
+      getLoggedInUser.password,
+    );
+
+    if (!isValidUser) {
+      return {
+        message: 'Wrong Credentail',
+      };
+    }
+    const generatedToken = await this.authService.generateJWT(loginData);
+    return {
+      access_token: generatedToken,
+    };
   }
 
-  async deleteLogin(loginId: string) {
-    await this.loginModel.deleteOne({ _id: loginId });
-    return 'Authentication data has been deleted successfully';
+  async deleteLogin(email: string) {
+    await this.loginModel.deleteOne({ email });
+    return 'Record has been deleted successfully';
   }
 
-  async updateLogin(loginId: string, userid: string, password: string) {
-    const login = await this.findLogin(loginId);
-    if (userid) {
-      login.userid = userid;
+  async updateLogin(emailId: string, email: string, password: string) {
+    const loggedInUser = await this.findUserByEmail(emailId);
+    if (email) {
+      loggedInUser.email = email;
     }
     if (password) {
-      login.password = password;
+      loggedInUser.password = password;
     }
-    const updatedLogin = await login.save();
-    return updatedLogin;
+    const updatedLoginUser = await loggedInUser.save();
+    return {
+      _id: updatedLoginUser.id,
+      email: updatedLoginUser.email,
+    };
   }
 
-  async findLogin(id: string) {
-    let login;
+  async findUserByEmail(email: string) {
+    let userData;
     try {
-      login = await this.loginModel.findById(id);
+      userData = await this.loginModel.findOne({ email });
     } catch {
-      throw new NotFoundException('could not find the Login detail');
+      userData = '';
     }
-    if (!login) {
-      throw new NotFoundException('could not find the Login detail');
-    }
-    return login;
+    return userData;
   }
 }
