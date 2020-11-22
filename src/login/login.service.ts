@@ -2,13 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthService } from 'src/auth/auth.service';
-import { LoginModel, RegisterModel } from './login.model';
+import { LoginModel, RegisterModel, RequestAccessModel } from './login.model';
 
 @Injectable()
 export class LoginService {
   constructor(
     @InjectModel('Login') private readonly registerModel: Model<RegisterModel>,
     @InjectModel('Login') private readonly loginModel: Model<LoginModel>,
+    @InjectModel('RequestAccess')
+    private readonly requestAccessModel: Model<RequestAccessModel>,
     private authService: AuthService,
   ) {}
 
@@ -76,6 +78,56 @@ export class LoginService {
       _id: updatedLoginUser.id,
       email: updatedLoginUser.email,
     };
+  }
+
+  async requestAccessPermission(
+    email: string,
+    status: string,
+    isAdmin: boolean,
+  ) {
+    const newRequest = new this.requestAccessModel({
+      email,
+      status,
+      isAdmin,
+    });
+    const requestAccess = await newRequest.save();
+    return requestAccess;
+  }
+
+  async getInActiveUser() {
+    const allRequestUser = await this.requestAccessModel.find();
+    console.log(allRequestUser);
+    return allRequestUser.filter((user) => user.status === 'In_Active');
+  }
+
+  async updateRequestUserStatus(
+    email: string,
+    status: string,
+    isAdmin: boolean,
+  ) {
+    const requestUser = await this.findRequestEmail(email);
+    if (email) {
+      requestUser.email = email;
+    }
+    if (status) {
+      requestUser.status = status;
+    }
+    if (isAdmin) {
+      requestUser.isAdmin = isAdmin;
+    }
+
+    const updatedUser = await requestUser.save();
+    return updatedUser;
+  }
+
+  async findRequestEmail(email: string) {
+    let userData;
+    try {
+      userData = await this.requestAccessModel.findOne({ email });
+    } catch {
+      userData = '';
+    }
+    return userData;
   }
 
   async findUserByEmail(email: string) {

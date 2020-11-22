@@ -6,6 +6,12 @@ export const LoginSchema = new mongoose.Schema({
   email: String,
 });
 
+export const RequestAccessSchema = new mongoose.Schema({
+  email: String,
+  status: String,
+  isAdmin: Boolean,
+});
+
 export interface RegisterModel extends mongoose.Document {
   userid: string;
   password: string;
@@ -15,4 +21,14 @@ export interface RegisterModel extends mongoose.Document {
 export interface LoginModel extends mongoose.Document {
   password: string;
   email: string;
+}
+
+export interface VerifyEmailModel extends mongoose.Document {
+  email: string;
+}
+
+export interface RequestAccessModel extends mongoose.Document {
+  email: string;
+  status: string;
+  isAdmin: boolean;
 }

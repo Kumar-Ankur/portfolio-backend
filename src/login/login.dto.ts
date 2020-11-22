@@ -14,3 +14,15 @@ export class LoginDTO {
   @ApiProperty()
   email: string;
 }
+
+export class VerifyEmailDTO {
+  @IsString()
+  @ApiProperty()
+  email: string;
+}
+
+export class RequestAccessDTO {
+  email: string;
+  status: string;
+  isAdmin: boolean;
+}
