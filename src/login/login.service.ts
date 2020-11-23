@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { MailerService } from '@nestjs-modules/mailer';
 import { Model } from 'mongoose';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginModel, RegisterModel, RequestAccessModel } from './login.model';
+import { check } from 'email-existence';
+import { resolve } from 'path';
 
 @Injectable()
 export class LoginService {
@@ -12,6 +15,7 @@ export class LoginService {
     @InjectModel('RequestAccess')
     private readonly requestAccessModel: Model<RequestAccessModel>,
     private authService: AuthService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async registerUser(userid: string, pass: string, email: string) {
@@ -138,5 +142,45 @@ export class LoginService {
       userData = '';
     }
     return userData;
+  }
+
+  // sendPermissionEmail;
+  async validateEmail(email: string) {
+    const mailSend = new Promise((resolve, reject) => {
+      check(email, (err, response) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(response);
+      });
+    });
+
+    return mailSend
+      .then((res) => {
+        return res as boolean;
+      })
+      .catch((err) => {
+        return false;
+      });
+  }
+
+  async sendPermissionEmail(email: string) {
+    return this.mailerService
+      .sendMail({
+        to: email,
+        cc: process.env.REQUEST_ACCESS_EMAIL,
+        from: process.env.REQUEST_ACCESS_EMAIL,
+        subject: 'Grant Permission to access PORTFOLIO Portal ✔',
+        text: 'Hi,',
+        html: `<h1>Request you to please provide access for below email id</h1>
+              <div>${email}</div>
+        `,
+      })
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   }
 }

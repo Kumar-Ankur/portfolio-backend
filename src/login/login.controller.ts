@@ -99,15 +99,32 @@ export class LoginController {
         status: verifyEmail.status,
       };
     }
+
+    const isValidEmail = await this.loginService.validateEmail(email);
+    if (!isValidEmail) {
+      return {
+        message: 'Email is not valid, please check once',
+        status: 'fail',
+      };
+    }
+    const sendMail = await this.loginService.sendPermissionEmail(email);
+    if (!sendMail) {
+      return {
+        message:
+          'Grant Permission Email did not send to Admin, please try after sometime',
+        status: 'fail',
+      };
+    }
     const status = REQUEST_STATUS.IN_ACTIVE;
     const newRequest = await this.loginService.requestAccessPermission(
       email,
       status,
       false,
     );
-
-    // todo  - mail send to admin for granting permission to respective email id
-    return newRequest;
+    return {
+      message: 'Mail has been send successfully',
+      data: newRequest,
+    };
   }
 
   @Get('/getinactiveuser')
