@@ -5,7 +5,6 @@ import { Model } from 'mongoose';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginModel, RegisterModel, RequestAccessModel } from './login.model';
 import { check } from 'email-existence';
-import { resolve } from 'path';
 
 @Injectable()
 export class LoginService {
@@ -144,7 +143,6 @@ export class LoginService {
     return userData;
   }
 
-  // sendPermissionEmail;
   async validateEmail(email: string) {
     const mailSend = new Promise((resolve, reject) => {
       check(email, (err, response) => {
@@ -159,7 +157,7 @@ export class LoginService {
       .then((res) => {
         return res as boolean;
       })
-      .catch((err) => {
+      .catch(() => {
         return false;
       });
   }
@@ -168,13 +166,10 @@ export class LoginService {
     return this.mailerService
       .sendMail({
         to: email,
-        cc: process.env.REQUEST_ACCESS_EMAIL,
+        bcc: process.env.REQUEST_ACCESS_EMAIL,
         from: process.env.REQUEST_ACCESS_EMAIL,
         subject: 'Grant Permission to access PORTFOLIO Portal ✔',
-        text: 'Hi,',
-        html: `<h1>Request you to please provide access for below email id</h1>
-              <div>${email}</div>
-        `,
+        template: 'index',
       })
       .then(() => {
         return true;

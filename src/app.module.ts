@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EducationModule } from './education/education.module';
@@ -28,6 +29,13 @@ console.log(process.env.REQUEST_ACCESS_PASSWORD);
           auth: {
             user: configService.get('REQUEST_ACCESS_EMAIL'),
             pass: configService.get('REQUEST_ACCESS_PASSWORD'),
+          },
+        },
+        template: {
+          dir: process.cwd() + '/template/',
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
           },
         },
       }),
