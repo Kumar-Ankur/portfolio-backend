@@ -1,15 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UserModel } from './user.model';
+import { ProfileModel } from './user.model';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel('Users') private readonly UserModel: Model<UserModel>,
+    @InjectModel('Profile') private readonly ProfileModel: Model<ProfileModel>,
   ) {}
 
   async insertUserDetail(
+    profileName,
     name,
     company,
     overview,
@@ -17,25 +18,21 @@ export class UsersService {
     experience,
     skills,
   ) {
-    const newUser = new this.UserModel({
-      name,
-      company,
-      overview,
-      description,
-      experience,
-      skills,
+    const newUser = new this.ProfileModel({
+      profileName,
+      profile: { name, company, overview, description, experience, skills },
     });
     const result = await newUser.save();
-    return result as UserModel;
+    return result as ProfileModel;
   }
 
-  async getUserData() {
-    const userResponse = this.UserModel.find();
+  async getUserData(profileName: string) {
+    const userResponse = await this.findUser(profileName);
     return userResponse;
   }
 
   async updateUser(
-    userId,
+    profileName,
     name,
     company,
     overview,
@@ -43,50 +40,54 @@ export class UsersService {
     experience,
     skills,
   ) {
-    const findProduct = await this.findUser(userId);
+    const findProduct: any = await this.findUser(profileName);
     if (name) {
-      findProduct.name = name;
+      findProduct.profile.name = name;
     }
 
     if (company) {
-      findProduct.company = company;
+      findProduct.profile.company = company;
     }
 
     if (overview) {
-      findProduct.overview = overview;
+      findProduct.profile.overview = overview;
     }
 
     if (description) {
-      findProduct.description = description;
+      findProduct.profile.description = description;
     }
 
     if (experience) {
-      findProduct.experience = experience;
+      findProduct.profile.experience = experience;
     }
 
     if (skills) {
-      findProduct.skills = skills;
+      findProduct.profile.skills = skills;
     }
     const result = await findProduct.save();
     return result;
   }
 
-  async deleteUser(userId: string) {
-    await this.UserModel.deleteOne({ _id: userId });
-    return 'User has been delete successfully';
+  async deleteUser(profileName: string) {
+    const profile = await this.findUser(profileName);
+    await this.ProfileModel.deleteOne({ profileName });
+    return {
+      message: 'Profile has been deleted successfully',
+      response: profile,
+    };
   }
 
-  private async findUser(id: string): Promise<UserModel> {
-    let user;
+  private async findUser(profileName: string): Promise<ProfileModel> {
+    let profile;
     try {
-      user = await this.UserModel.findById(id).exec();
+      profile = await this.ProfileModel.findOne({ profileName }).exec();
     } catch (error) {
-      throw new NotFoundException('could not find the user');
+      throw new NotFoundException('could not find profile');
     }
 
-    if (!user) {
-      throw new NotFoundException('could not find the user');
+    if (!profile) {
+      throw new NotFoundException('could not find profile');
     }
-    return user;
+    return profile;
   }
 }

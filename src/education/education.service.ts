@@ -12,36 +12,71 @@ export class EducationService {
   ) {}
 
   async insertEducation(
+    profileName: string,
     degree: string,
     institution: string,
     board: string,
     year: string,
     percentage: number,
   ) {
-    const newEducation = new this.educationModel({
+    const educationDetail: any = await this.educationModel.findOne({
+      profileName,
+    });
+    const educationObj = {
       degree,
       institution,
       board,
       year,
       percentage,
-    });
-    const result = await newEducation.save();
-    return result;
+    };
+    if (!educationDetail) {
+      const newEducation = new this.educationModel({
+        profileName,
+        education: [educationObj],
+      });
+      const result = await newEducation.save();
+      return result;
+    } else {
+      educationDetail.education = [...educationDetail.education, educationObj];
+      const result = await educationDetail.save();
+      return result;
+    }
   }
 
-  async getEducation() {
-    const education = await this.educationModel.find();
+  async getEducation(profileName: string) {
+    const education = await this.educationModel.findOne({ profileName });
+    if (!education) {
+      return {
+        status: 'fail',
+        message: `no education detail found for this ${profileName} profile`,
+      };
+    }
     return education;
   }
 
-  async deleteEducation(educationId: string) {
-    await this.educationModel.deleteOne({
-      _id: educationId,
-    });
-    return 'education has been deleted successfully';
+  async deleteEducationById(profileName: string, educationId: string) {
+    const getEducationDetail = await this.findEducation(profileName);
+    const updatedEducation = getEducationDetail['education'].filter(
+      (education: EducationModel) => {
+        return education.id !== educationId;
+      },
+    );
+    getEducationDetail['education'] = updatedEducation;
+    const result = await getEducationDetail.save();
+    return result;
+  }
+
+  async deleteEducation(profileName: string) {
+    const getEducationDetail = await this.findEducation(profileName);
+    await this.educationModel.deleteOne({ profileName });
+    return {
+      message: 'Education Detail has been deleted successfully',
+      educationDetail: getEducationDetail,
+    };
   }
 
   async updateEducation(
+    profileName: string,
     educationId: string,
     degree: string,
     institution: string,
@@ -49,37 +84,65 @@ export class EducationService {
     year: string,
     percentage: number,
   ) {
-    const education = await this.findEducation(educationId);
-    if (degree) {
-      education.degree = degree;
+    const getEducationDetail = await this.findEducation(profileName);
+    const updatedEducationIndex = this.getEducationIndex(
+      getEducationDetail['education'],
+      educationId,
+    );
+    if (updatedEducationIndex !== -1) {
+      if (degree) {
+        getEducationDetail['education'][updatedEducationIndex].degree = degree;
+      }
+      if (institution) {
+        getEducationDetail['education'][
+          updatedEducationIndex
+        ].institution = institution;
+      }
+      if (board) {
+        getEducationDetail['education'][updatedEducationIndex].board = board;
+      }
+      if (year) {
+        getEducationDetail['education'][updatedEducationIndex].year = year;
+      }
+      if (percentage) {
+        getEducationDetail['education'][
+          updatedEducationIndex
+        ].percentage = percentage;
+      }
+      const modifyEducation = await getEducationDetail.save();
+      return modifyEducation;
+    } else {
+      return {
+        message: `Education details is not present in ${profileName} profile with education id ${educationId}`,
+        status: 'fail',
+      };
     }
-    if (institution) {
-      education.institution = institution;
-    }
-    if (board) {
-      education.board = board;
-    }
-    if (year) {
-      education.year = year;
-    }
-    if (percentage) {
-      education.percentage = percentage;
-    }
-    const modifyEducation = await education.save();
-    return modifyEducation;
   }
 
-  private async findEducation(id: string): Promise<EducationModel> {
-    let user;
+  private getEducationIndex(educations: [EducationModel], educationId: string) {
+    for (let i = 0; i < educations.length; i++) {
+      if (educations[i].id === educationId) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private async findEducation(profileName: string): Promise<EducationModel> {
+    let education;
     try {
-      user = await this.educationModel.findById(id).exec();
+      education = await this.educationModel.findOne({ profileName }).exec();
     } catch (error) {
-      throw new NotFoundException('could not find the user');
+      throw new NotFoundException(
+        `could not find the education details for ${profileName} profile`,
+      );
     }
 
-    if (!user) {
-      throw new NotFoundException('could not find the user');
+    if (!education) {
+      throw new NotFoundException(
+        `could not find the education details for ${profileName} profile`,
+      );
     }
-    return user;
+    return education;
   }
 }

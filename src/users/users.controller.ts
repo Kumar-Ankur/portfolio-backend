@@ -13,7 +13,7 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UserModel } from './user.model';
+import { ProfileModel } from './user.model';
 import { UserDTO } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -22,7 +22,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @Post(':profileName')
   @ApiCreatedResponse({
     description: 'User record has been successfully saved',
     type: UserDTO,
@@ -31,10 +31,14 @@ export class UsersController {
     required: true,
     type: UserDTO,
   })
-  async addUserDetail(@Body() user: UserModel) {
+  async addUserDetail(
+    @Param('profileName') profileName: string,
+    @Body() user: ProfileModel,
+  ) {
     const { name, company, overview, description, experience, skills } = user;
 
     const newlyAddedUser = await this.usersService.insertUserDetail(
+      profileName,
       name,
       company,
       overview,
@@ -46,17 +50,17 @@ export class UsersController {
     return newlyAddedUser;
   }
 
-  @Get()
+  @Get(':profileName')
   @ApiOkResponse({
     description: 'User record has been successfully fetched',
-    type: [UserDTO],
+    type: UserDTO,
   })
-  async getUserData() {
-    const response = await this.usersService.getUserData();
+  async getUserData(@Param('profileName') profileName: string) {
+    const response = await this.usersService.getUserData(profileName);
     return response;
   }
 
-  @Patch(':id')
+  @Patch(':profileName')
   @ApiCreatedResponse({
     description: 'User record has been successfully updated',
     type: UserDTO,
@@ -65,10 +69,13 @@ export class UsersController {
     required: true,
     type: UserDTO,
   })
-  async updateUser(@Param('id') userId: string, @Body() user: UserModel) {
+  async updateUser(
+    @Param('profileName') profileName: string,
+    @Body() user: ProfileModel,
+  ) {
     const { name, company, overview, description, experience, skills } = user;
     const updatedUser = await this.usersService.updateUser(
-      userId,
+      profileName,
       name,
       company,
       overview,
@@ -76,13 +83,13 @@ export class UsersController {
       experience,
       skills,
     );
-    return updatedUser as UserModel;
+    return updatedUser as ProfileModel;
   }
 
-  @Delete(':id')
+  @Delete(':profileName')
   @ApiOkResponse()
-  async deleteUser(@Param('id') userId: string) {
-    const deleteUser = await this.usersService.deleteUser(userId);
-    return { message: deleteUser };
+  async deleteUser(@Param('profileName') profileName: string) {
+    const deleteUser = await this.usersService.deleteUser(profileName);
+    return deleteUser;
   }
 }

@@ -1,14 +1,18 @@
 import * as mongoose from 'mongoose';
 
-export const UserScheme = new mongoose.Schema({
-  name: String,
-  company: String,
-  overview: String,
-  description: String,
-  experience: Number,
+export const ProfileSchema = new mongoose.Schema({
+  profileName: String,
+  profile: {
+    name: String,
+    company: String,
+    overview: String,
+    description: String,
+    experience: Number,
+    skills: [String],
+  },
 });
 
-export interface UserModel extends mongoose.Document {
+export interface ProfileModel extends mongoose.Document {
   name: string;
   company: string;
   overview: string;

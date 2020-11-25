@@ -22,7 +22,7 @@ import { EducationDTO } from './education.dto';
 export class EducationController {
   constructor(private readonly educationService: EducationService) {}
 
-  @Post()
+  @Post(':profileName')
   @ApiCreatedResponse({
     description: 'Education has been inserted sucessfully',
     type: EducationDTO,
@@ -31,9 +31,13 @@ export class EducationController {
     required: true,
     type: EducationDTO,
   })
-  async insertEducation(@Body() education: EducationModel) {
+  async insertEducation(
+    @Param('profileName') profileName: string,
+    @Body() education: EducationModel,
+  ) {
     const { degree, institution, board, year, percentage } = education;
     const newEducation = await this.educationService.insertEducation(
+      profileName,
       degree,
       institution,
       board,
@@ -43,28 +47,45 @@ export class EducationController {
     return newEducation;
   }
 
-  @Get()
+  @Get(':profileName')
   @ApiOkResponse({
     description: 'Fetched education data successfully',
     type: [EducationDTO],
   })
-  async getEducation() {
-    const fetchedEducation = await this.educationService.getEducation();
+  async getEducation(@Param('profileName') profileName: string) {
+    const fetchedEducation = await this.educationService.getEducation(
+      profileName,
+    );
     return fetchedEducation;
   }
 
-  @Delete(':id')
+  @Delete(':profileName/:id')
   @ApiOkResponse({
     description: 'Education has been successfully deleted',
   })
-  async deleteEducation(@Param('id') educationId: string) {
-    const deleteEducation = await this.educationService.deleteEducation(
+  async deleteEducationById(
+    @Param('profileName') profileName: string,
+    @Param('id') educationId: string,
+  ) {
+    const deleteEducation = await this.educationService.deleteEducationById(
+      profileName,
       educationId,
     );
     return { message: deleteEducation };
   }
 
-  @Patch(':id')
+  @Delete(':profileName')
+  @ApiOkResponse({
+    description: 'Education has been successfully deleted',
+  })
+  async deleteEducation(@Param('profileName') profileName: string) {
+    const deleteEducation = await this.educationService.deleteEducation(
+      profileName,
+    );
+    return deleteEducation;
+  }
+
+  @Patch(':profileName/:id')
   @ApiOkResponse({
     description: 'Education has been updated successfully',
     type: EducationDTO,
@@ -74,11 +95,13 @@ export class EducationController {
     type: EducationDTO,
   })
   async updateEducation(
+    @Param('profileName') profileName: string,
     @Param('id') educationId: string,
     @Body() education: EducationModel,
   ) {
     const { degree, institution, board, year, percentage } = education;
     const updatedEducation = await this.educationService.updateEducation(
+      profileName,
       educationId,
       degree,
       institution,
