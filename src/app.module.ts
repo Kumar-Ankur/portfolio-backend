@@ -10,8 +10,6 @@ import { LoginModule } from './login/login.module';
 import { ProjectModule } from './project/project.module';
 import { ContactModule } from './contact/contact.module';
 import { AuthModule } from './auth/auth.module';
-
-console.log(process.env.REQUEST_ACCESS_PASSWORD);
 @Module({
   imports: [
     UsersModule,

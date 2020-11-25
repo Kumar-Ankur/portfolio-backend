@@ -1,21 +1,32 @@
 import * as mongoose from 'mongoose';
 
-export const LoginSchema = new mongoose.Schema({
-  userid: String,
-  password: String,
-  email: String,
-});
-
 export const RequestAccessSchema = new mongoose.Schema({
   email: String,
   status: String,
   isAdmin: Boolean,
 });
 
-export interface RegisterModel extends mongoose.Document {
-  userid: string;
-  password: string;
+export const RegisterSchema = new mongoose.Schema({
+  firstName: String,
+  lastName: String,
+  email: String,
+  password: String,
+  profileName: String,
+});
+
+export interface RegisterRequestModel extends mongoose.Document {
+  firstName: string;
+  lastName: string;
   email: string;
+  password: string;
+}
+
+export interface RegisterResponseModel extends mongoose.Document {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  profileName: string;
 }
 
 export interface LoginModel extends mongoose.Document {

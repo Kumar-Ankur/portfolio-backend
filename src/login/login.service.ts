@@ -3,42 +3,56 @@ import { InjectModel } from '@nestjs/mongoose';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Model } from 'mongoose';
 import { AuthService } from 'src/auth/auth.service';
-import { LoginModel, RegisterModel, RequestAccessModel } from './login.model';
+import {
+  RegisterRequestModel,
+  RegisterResponseModel,
+  RequestAccessModel,
+} from './login.model';
 import { check } from 'email-existence';
 
 @Injectable()
 export class LoginService {
   constructor(
-    @InjectModel('Login') private readonly registerModel: Model<RegisterModel>,
-    @InjectModel('Login') private readonly loginModel: Model<LoginModel>,
+    @InjectModel('Register')
+    private readonly registerModel: Model<RegisterResponseModel>,
     @InjectModel('RequestAccess')
     private readonly requestAccessModel: Model<RequestAccessModel>,
     private authService: AuthService,
     private readonly mailerService: MailerService,
   ) {}
 
-  async registerUser(userid: string, pass: string, email: string) {
+  async registerUser(
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    profileName: string,
+  ) {
     const getLoginData = await this.findUserByEmail(email);
     if (getLoginData) {
       return {
         message: 'Email Id Already Registered',
       };
     }
-    const passwordHash = await this.authService.hashPassword(pass);
-    const newLogin = new this.registerModel();
-    newLogin.userid = userid;
-    newLogin.password = passwordHash;
-    newLogin.email = email;
-    const result = await newLogin.save();
+    const passwordHash = await this.authService.hashPassword(password);
+    const newRegister = new this.registerModel();
+    newRegister.firstName = firstName;
+    newRegister.lastName = lastName;
+    newRegister.email = email;
+    newRegister.password = passwordHash;
+    newRegister.profileName = profileName.toLowerCase();
+    const result = await newRegister.save();
     return {
-      message: 'User credential has been saved successfully',
-      userid: result.userid,
+      message: 'User credential has been registered successfully',
+      firstName: result.firstName,
+      lastName: result.lastName,
       email: result.email,
+      profileName: result.profileName,
       _id: result.id,
     };
   }
 
-  async loginUser(loginData: LoginModel) {
+  async loginUser(loginData: RegisterRequestModel) {
     const { email, password } = loginData;
     const getLoggedInUser = await this.findUserByEmail(email);
     if (!getLoggedInUser) {
@@ -54,22 +68,36 @@ export class LoginService {
 
     if (!isValidUser) {
       return {
-        message: 'Wrong Credentail',
+        message: 'Wrong Credential',
+        status: 'fail',
       };
     }
     const generatedToken = await this.authService.generateJWT(loginData);
     return {
       access_token: generatedToken,
+      status: 'success',
     };
   }
 
   async deleteLogin(email: string) {
-    await this.loginModel.deleteOne({ email });
+    await this.registerModel.deleteOne({ email });
     return 'Record has been deleted successfully';
   }
 
-  async updateLogin(emailId: string, email: string, password: string) {
+  async updateLogin(
+    emailId: string,
+    firstname: string,
+    lastname: string,
+    email: string,
+    password: string,
+  ) {
     const loggedInUser = await this.findUserByEmail(emailId);
+    if (firstname) {
+      loggedInUser.firstName = firstname;
+    }
+    if (lastname) {
+      loggedInUser.lastName = lastname;
+    }
     if (email) {
       loggedInUser.email = email;
     }
@@ -136,7 +164,7 @@ export class LoginService {
   async findUserByEmail(email: string) {
     let userData;
     try {
-      userData = await this.loginModel.findOne({ email });
+      userData = await this.registerModel.findOne({ email });
     } catch {
       userData = '';
     }
@@ -177,5 +205,28 @@ export class LoginService {
       .catch(() => {
         return false;
       });
+  }
+
+  async isProfileName(profileName: string) {
+    let profile;
+    try {
+      profile = await this.registerModel.findOne({ profileName });
+    } catch {
+      profile = '';
+    }
+    return profile;
+  }
+
+  async getProfileName(firstName: string, lastName: string) {
+    const profileName =
+      firstName.toString().slice(0, 3) +
+      lastName.toString().slice(0, 3) +
+      ~~(Math.random() * 100);
+
+    const isProfilePresent = await this.isProfileName(profileName);
+    if (isProfilePresent) {
+      return this.getProfileName(firstName, lastName);
+    }
+    return profileName;
   }
 }

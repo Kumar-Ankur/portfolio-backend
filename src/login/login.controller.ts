@@ -13,11 +13,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { LoginDTO, RequestAccessDTO, VerifyEmailDTO } from './login.dto';
+import { RegisterDTO, RequestAccessDTO, VerifyEmailDTO } from './login.dto';
 import {
   LoginModel,
-  RegisterModel,
-  RequestAccessModel,
+  RegisterRequestModel,
   VerifyEmailModel,
 } from './login.model';
 import { LoginService } from './login.service';
@@ -30,25 +29,6 @@ enum REQUEST_STATUS {
 @ApiTags('User')
 export class LoginController {
   constructor(private readonly loginService: LoginService) {}
-
-  @Post('/register')
-  @ApiCreatedResponse({
-    description: 'Login credential has been added successfully',
-    type: LoginDTO,
-  })
-  @ApiBody({
-    required: true,
-    type: LoginDTO,
-  })
-  async insertLoginCredential(@Body() register: RegisterModel) {
-    const { userid, password, email } = register;
-    const registeredUser = await this.loginService.registerUser(
-      userid,
-      password,
-      email,
-    );
-    return registeredUser;
-  }
 
   @Post('/verify')
   @ApiOkResponse({
@@ -127,6 +107,31 @@ export class LoginController {
     };
   }
 
+  @Post('/register')
+  @ApiCreatedResponse({
+    description: 'Login credential has been added successfully',
+    type: RegisterDTO,
+  })
+  @ApiBody({
+    required: true,
+    type: RegisterDTO,
+  })
+  async insertLoginCredential(@Body() register: RegisterRequestModel) {
+    const { firstName, lastName, email, password } = register;
+    const profileName = await this.loginService.getProfileName(
+      firstName,
+      lastName,
+    );
+    const registeredUser = await this.loginService.registerUser(
+      firstName,
+      lastName,
+      email,
+      password,
+      profileName,
+    );
+    return registeredUser;
+  }
+
   @Get('/getinactiveuser')
   @ApiOkResponse({
     description: 'In Active User has been fetched successfully',
@@ -143,9 +148,9 @@ export class LoginController {
   })
   @ApiBody({
     required: true,
-    type: LoginDTO,
+    type: RegisterDTO,
   })
-  async loginUser(@Body() loginData: LoginModel) {
+  async loginUser(@Body() loginData: RegisterRequestModel) {
     const loggedInUser = await this.loginService.loginUser(loginData);
     return loggedInUser;
   }
@@ -183,20 +188,22 @@ export class LoginController {
 
   @Patch(':email')
   @ApiOkResponse({
-    description: 'Login credential has been updated successfully',
-    type: LoginDTO,
+    description: 'User detail has been updated successfully',
+    type: RegisterDTO,
   })
   @ApiBody({
     required: true,
-    type: LoginDTO,
+    type: RegisterDTO,
   })
   async updateLoginCredential(
     @Param('email') emailId: string,
-    @Body() login: LoginModel,
+    @Body() login: RegisterDTO,
   ) {
-    const { email, password } = login;
+    const { firstName, lastName, email, password } = login;
     const updatedLoginCredential = await this.loginService.updateLogin(
       emailId,
+      firstName,
+      lastName,
       email,
       password,
     );
