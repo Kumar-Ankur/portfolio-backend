@@ -68,6 +68,12 @@ export class EducationService {
 
   async deleteEducation(profileName: string) {
     const getEducationDetail = await this.findEducation(profileName);
+    if (!getEducationDetail) {
+      return {
+        message: `Profile: ${profileName} does not exixts`,
+        status: 'fail',
+      };
+    }
     await this.educationModel.deleteOne({ profileName });
     return {
       message: 'Education Detail has been deleted successfully',

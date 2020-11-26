@@ -12,6 +12,7 @@ export class OfficialService {
   ) {}
 
   async insertOfficialProject(
+    profileName: string,
     employer: string,
     client: string,
     projectDescription: string[],
@@ -19,32 +20,90 @@ export class OfficialService {
     teamSize: number,
     responsibility: string[],
   ) {
-    const newOfficialProject = new this.officialModel({
+    const getOfficialProjectDetail = await this.officialModel.findOne({
+      profileName,
+    });
+    const newOfficialProject = {
       employer,
       client,
       projectDescription,
       role,
       teamSize,
       responsibility,
-    });
+    };
 
-    const result = await newOfficialProject.save();
-    return result;
+    if (!getOfficialProjectDetail) {
+      const newProject = new this.officialModel({
+        profileName,
+        officialProject: newOfficialProject,
+      });
+      const result = await newProject.save();
+      return result;
+    } else {
+      getOfficialProjectDetail['officialProject'] = [
+        ...getOfficialProjectDetail['officialProject'],
+        newOfficialProject,
+      ];
+      const result = await getOfficialProjectDetail.save();
+      return result;
+    }
   }
 
-  async fetchedProject() {
-    const fetchedResponse = await this.officialModel.find();
-    return fetchedResponse;
+  async fetchedProject(profileName: string) {
+    const getOfficialProjectDetail = await this.officialModel.findOne({
+      profileName,
+    });
+    if (!getOfficialProjectDetail) {
+      return {
+        message: `No official project records find for ${profileName} profile`,
+        status: 'fail',
+      };
+    }
+    return getOfficialProjectDetail;
   }
 
-  async deleteOfficialProject(projectId: string) {
-    await this.officialModel.deleteOne({
-      _id: projectId,
+  async deleteOfficialProjectById(profileName: string, projectId: string) {
+    const getOfficialProjectDetail = await this.officialModel.findOne({
+      profileName,
     });
-    return 'Project has been deleted successfully';
+    if (!getOfficialProjectDetail) {
+      return {
+        message: `official project having ID: ${projectId} does not find in profile ${profileName}`,
+        status: 'fail',
+      };
+    }
+    const updatedOfficialProject = getOfficialProjectDetail[
+      'officialProject'
+    ].filter((project: OfficialModel) => {
+      return project.id !== projectId;
+    });
+    getOfficialProjectDetail['officialProject'] = updatedOfficialProject;
+    const result = await getOfficialProjectDetail.save();
+    return {
+      message: `Official project for profile ${profileName} having ID: ${projectId} has been deleted successfully`,
+      deletedOfficialProject: result,
+    };
+  }
+
+  async deleteOfficialProject(profileName: string) {
+    const getOfficialProjectDetail = await this.officialModel.findOne({
+      profileName,
+    });
+    if (!getOfficialProjectDetail) {
+      return {
+        message: `Profile: ${profileName} does not exixts`,
+        status: 'fail',
+      };
+    }
+    await this.officialModel.deleteOne({ profileName });
+    return {
+      message: `Profile Detail has been deleted successfully for profile: ${profileName}`,
+      profileDetail: getOfficialProjectDetail,
+    };
   }
 
   async updateProject(
+    profileName: string,
     projectId: string,
     employer: string,
     client: string,
@@ -53,40 +112,70 @@ export class OfficialService {
     teamSize: number,
     responsibility: string[],
   ) {
-    const project = await this.findOfficial(projectId);
-    if (employer) {
-      project.employer = employer;
+    const getOfficialProjectDetail = await this.officialModel.findOne({
+      profileName,
+    });
+    if (!getOfficialProjectDetail) {
+      return {
+        message: `Profile: ${profileName} does not exixts`,
+        status: 'fail',
+      };
     }
-    if (client) {
-      project.client = client;
+    const updatedProjectIndex = this.getOfficialProjectIndex(
+      getOfficialProjectDetail['officialProject'],
+      projectId,
+    );
+
+    if (updatedProjectIndex !== -1) {
+      if (employer) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].employer = employer;
+      }
+      if (client) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].client = client;
+      }
+      if (projectDescription) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].projectDescription = projectDescription;
+      }
+      if (role) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].role = role;
+      }
+      if (teamSize) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].teamSize = teamSize;
+      }
+      if (responsibility) {
+        getOfficialProjectDetail['officialProject'][
+          updatedProjectIndex
+        ].responsibility = responsibility;
+      }
+      const updatedResult = await getOfficialProjectDetail.save();
+      return updatedResult;
+    } else {
+      return {
+        message: `Official Project details is not present in ${profileName} profile with education id ${projectId}`,
+        status: 'fail',
+      };
     }
-    if (projectDescription) {
-      project.projectDescription = projectDescription;
-    }
-    if (role) {
-      project.role = role;
-    }
-    if (teamSize) {
-      project.teamSize = teamSize;
-    }
-    if (responsibility) {
-      project.responsibility = responsibility;
-    }
-    const updatedResult = await project.save();
-    return updatedResult;
   }
 
-  private async findOfficial(id: string): Promise<OfficialModel> {
-    let user;
-    try {
-      user = await this.officialModel.findById(id).exec();
-    } catch (error) {
-      throw new NotFoundException('could not find the official project');
+  private getOfficialProjectIndex(
+    projects: [OfficialModel],
+    projectId: string,
+  ) {
+    for (let i = 0; i < projects.length; i++) {
+      if (projects[i].id === projectId) {
+        return i;
+      }
     }
-
-    if (!user) {
-      throw new NotFoundException('could not find the official project');
-    }
-    return user;
+    return -1;
   }
 }

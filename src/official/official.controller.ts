@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { OfficialDTO } from './official.dto';
@@ -18,7 +17,7 @@ import { OfficialService } from './official.service';
 export class OfficialController {
   constructor(private readonly officialService: OfficialService) {}
 
-  @Post()
+  @Post(':profileName')
   @ApiOkResponse({
     description: 'Official Project has been added successfully',
     type: OfficialDTO,
@@ -27,7 +26,10 @@ export class OfficialController {
     required: true,
     type: OfficialDTO,
   })
-  async insertOfficialProject(@Body() project: OfficialModel) {
+  async insertOfficialProject(
+    @Param('profileName') profileName: string,
+    @Body() project: OfficialModel,
+  ) {
     const {
       employer,
       client,
@@ -37,6 +39,7 @@ export class OfficialController {
       responsibility,
     } = project;
     const newProject = await this.officialService.insertOfficialProject(
+      profileName,
       employer,
       client,
       projectDescription,
@@ -47,31 +50,45 @@ export class OfficialController {
     return newProject;
   }
 
-  @Get()
+  @Get(':profileName')
   @ApiOkResponse({
     description: 'Official project fetched successfully',
-    type: [OfficialDTO],
+    type: OfficialDTO,
   })
-  async getOfficialProject(@Req() req: any) {
-    console.log(req.headers.referer);
-    const fetchedProject = await this.officialService.fetchedProject();
+  async getOfficialProject(@Param('profileName') profileName: string) {
+    const fetchedProject = await this.officialService.fetchedProject(
+      profileName,
+    );
     return fetchedProject;
   }
 
-  @Delete(':id')
+  @Delete(':profileName/:id')
   @ApiOkResponse({
     description: 'Official Prpject has been deleted successfully',
   })
-  async deleteOfficialProject(@Param('id') projectId: string) {
-    const deleteProject = await this.officialService.deleteOfficialProject(
+  async deleteOfficialProjectById(
+    @Param('profileName') profileName: string,
+    @Param('id') projectId: string,
+  ) {
+    const deleteProject = await this.officialService.deleteOfficialProjectById(
+      profileName,
       projectId,
     );
-    return {
-      message: deleteProject,
-    };
+    return deleteProject;
   }
 
-  @Patch(':id')
+  @Delete(':profileName')
+  @ApiOkResponse({
+    description: 'Official Prpject has been deleted successfully',
+  })
+  async deleteOfficialProject(@Param('profileName') profileName: string) {
+    const deleteProject = await this.officialService.deleteOfficialProject(
+      profileName,
+    );
+    return deleteProject;
+  }
+
+  @Patch(':profileName/:id')
   @ApiOkResponse({
     description: 'Official project has been updated successfully',
     type: OfficialDTO,
@@ -83,6 +100,7 @@ export class OfficialController {
   async updateProject(
     @Body() project: OfficialModel,
     @Param('id') projectId: string,
+    @Param('profileName') profileName: string,
   ) {
     const {
       employer,
@@ -93,6 +111,7 @@ export class OfficialController {
       responsibility,
     } = project;
     const updatedResult = await this.officialService.updateProject(
+      profileName,
       projectId,
       employer,
       client,
