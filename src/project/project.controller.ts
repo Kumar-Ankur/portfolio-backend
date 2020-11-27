@@ -22,7 +22,7 @@ import { ProjectService } from './project.service';
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @Post()
+  @Post(':profileName')
   @ApiCreatedResponse({
     description: 'Project has been added successfully',
     type: ProjectDTO,
@@ -31,9 +31,13 @@ export class ProjectController {
     required: true,
     type: ProjectDTO,
   })
-  async addNewProject(@Body() project: ProjectModel) {
+  async addNewProject(
+    @Param('profileName') profileName: string,
+    @Body() project: ProjectModel,
+  ) {
     const { url, title, description, imageId } = project;
     const newProject = await this.projectService.saveNewProject(
+      profileName,
       url,
       title,
       description,
@@ -42,27 +46,17 @@ export class ProjectController {
     return newProject;
   }
 
-  @Get()
+  @Get(':profileName')
   @ApiOkResponse({
     description: 'Project data has been fetched successfully',
     type: [ProjectDTO],
   })
-  async getProject() {
-    const getProjectData = await this.projectService.getProject();
+  async getProject(@Param('profileName') profileName: string) {
+    const getProjectData = await this.projectService.getProject(profileName);
     return getProjectData;
   }
 
-  @Get(':id')
-  @ApiOkResponse({
-    description: 'Project has been fetched successfully',
-    type: ProjectDTO,
-  })
-  async getProjectById(@Param('id') projectId: string) {
-    const project = await this.projectService.findProject(projectId);
-    return project;
-  }
-
-  @Patch(':id')
+  @Patch(':profileName/:id')
   @ApiCreatedResponse({
     description: 'Project has been updated successfully',
     type: ProjectDTO,
@@ -72,11 +66,13 @@ export class ProjectController {
     type: ProjectDTO,
   })
   async updateProject(
+    @Param('profileName') profileName: string,
     @Param('id') projectId: string,
     @Body() project: ProjectModel,
   ) {
     const { url, title, description, imageId } = project;
     const updatedProject = await this.projectService.updateProject(
+      profileName,
       projectId,
       url,
       title,
@@ -86,16 +82,29 @@ export class ProjectController {
     return updatedProject;
   }
 
-  @Delete(':id')
+  @Delete(':profileName/:id')
   @ApiOkResponse({
     description: 'Project has been deleted successfully',
     type: ProjectDTO,
   })
-  async deleteProject(@Param('id') projectId: string) {
-    const project = await this.projectService.deleteProject(projectId);
-    return {
-      message: 'Project has been deleted successfully',
-      project,
-    };
+  async deleteProjectById(
+    @Param('profileName') profileName: string,
+    @Param('id') projectId: string,
+  ) {
+    const project = await this.projectService.deleteProjectById(
+      profileName,
+      projectId,
+    );
+    return project;
+  }
+
+  @Delete(':profileName')
+  @ApiOkResponse({
+    description: 'Project has been deleted successfully',
+    type: ProjectDTO,
+  })
+  async deleteProject(@Param('profileName') profileName: string) {
+    const project = await this.projectService.deleteProject(profileName);
+    return project;
   }
 }
