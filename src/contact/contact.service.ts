@@ -9,17 +9,44 @@ export class ContactService {
     @InjectModel('contact') private readonly contactModel: Model<ContactModel>,
   ) {}
 
-  async saveNewContact(name: string, email: string, message: string) {
-    const newContact = new this.contactModel({
+  async saveNewContact(
+    profileName: string,
+    name: string,
+    email: string,
+    message: string,
+  ) {
+    const contactDetail: any = await this.contactModel.findOne({
+      profileName,
+    });
+    const contactObj = {
       name,
       email,
       message,
-    });
-    const createNewContact = await newContact.save();
-    return createNewContact;
+    };
+    if (!contactDetail) {
+      const newContact = new this.contactModel({
+        profileName,
+        contact: [contactObj],
+      });
+      const result = await newContact.save();
+      return result;
+    } else {
+      contactDetail.contact = [...contactDetail.contact, contactObj];
+      const result = await contactDetail.save();
+      return result;
+    }
   }
 
-  async getContact() {
-    return await this.contactModel.find();
+  async getContact(profileName: string) {
+    const contactDetail: any = await this.contactModel.findOne({
+      profileName,
+    });
+    if (!contactDetail) {
+      return {
+        status: 'fail',
+        message: `no project detail found for this ${profileName} profile`,
+      };
+    }
+    return contactDetail;
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import {
   ApiBody,
   ApiCreatedResponse,
@@ -14,7 +14,7 @@ import { ContactService } from './contact.service';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @Post()
+  @Post(':profileName')
   @ApiCreatedResponse({
     description: 'Contact has been saved successfully',
     type: ContactDTO,
@@ -23,9 +23,13 @@ export class ContactController {
     required: true,
     type: ContactDTO,
   })
-  async createNewContact(@Body() contact: ContactModel) {
+  async createNewContact(
+    @Param('profileName') profileName: string,
+    @Body() contact: ContactModel,
+  ) {
     const { name, email, message } = contact;
     const newContact = await this.contactService.saveNewContact(
+      profileName,
       name,
       email,
       message,
@@ -33,13 +37,13 @@ export class ContactController {
     return newContact;
   }
 
-  @Get()
+  @Get(':profileName')
   @ApiOkResponse({
     description: 'Contact has been fetched successfully',
     type: [ContactDTO],
   })
-  async getContact() {
-    const getAllContact = await this.contactService.getContact();
+  async getContact(@Param('profileName') profileName: string) {
+    const getAllContact = await this.contactService.getContact(profileName);
     return getAllContact;
   }
 }
