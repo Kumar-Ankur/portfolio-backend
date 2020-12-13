@@ -34,7 +34,7 @@ export class ImageController {
   upload(@UploadedFile() file) {
     const response = [];
     const fileReponse = {
-      originalname: file.originalname,
+      originalname: file.originalname || '',
       encoding: file.encoding,
       mimetype: file.mimetype,
       id: file.id,

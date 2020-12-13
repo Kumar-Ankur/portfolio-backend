@@ -12,6 +12,7 @@ export const RegisterSchema = new mongoose.Schema({
   email: String,
   password: String,
   profileName: String,
+  profileImageId: String,
 });
 
 export interface RegisterRequestModel extends mongoose.Document {
@@ -19,6 +20,7 @@ export interface RegisterRequestModel extends mongoose.Document {
   lastName: string;
   email: string;
   password: string;
+  profileImageId: string;
 }
 
 export interface RegisterResponseModel extends mongoose.Document {
@@ -27,6 +29,7 @@ export interface RegisterResponseModel extends mongoose.Document {
   email: string;
   password: string;
   profileName: string;
+  profileImageId: string;
 }
 
 export interface LoginModel extends mongoose.Document {

@@ -1,18 +1,12 @@
-import {
-  Injectable,
-  HttpException,
-  HttpStatus,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { MongoGridFS } from 'mongo-gridfs';
-import { Connection, Mongoose } from 'mongoose';
+import { Connection } from 'mongoose';
 import {
   MulterModuleOptions,
   MulterOptionsFactory,
 } from '@nestjs/platform-express';
 import * as GridfsStorage from 'multer-gridfs-storage';
-import * as mongoose from 'mongoose';
 
 @Injectable()
 export class ImageService implements MulterOptionsFactory {

@@ -17,12 +17,32 @@ export class RegisterDTO {
   @IsString()
   @ApiProperty()
   password: string;
+
+  @IsString()
+  @ApiProperty()
+  profileImageId: string;
+}
+
+export class LoginDTO {
+  @IsString()
+  @ApiProperty()
+  email: string;
+
+  @IsString()
+  @ApiProperty()
+  password: string;
 }
 
 export class VerifyEmailDTO {
   @IsString()
   @ApiProperty()
   email: string;
+}
+
+export class UpdateImageDTO {
+  @IsString()
+  @ApiProperty()
+  profileImageId: string;
 }
 
 export class RequestAccessDTO {

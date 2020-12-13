@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -13,10 +14,17 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RegisterDTO, RequestAccessDTO, VerifyEmailDTO } from './login.dto';
+import {
+  LoginDTO,
+  RegisterDTO,
+  RequestAccessDTO,
+  UpdateImageDTO,
+  VerifyEmailDTO,
+} from './login.dto';
 import {
   LoginModel,
   RegisterRequestModel,
+  RequestAccessModel,
   VerifyEmailModel,
 } from './login.model';
 import { LoginService } from './login.service';
@@ -53,11 +61,14 @@ export class LoginController {
       return {
         status: false,
         message: 'Request already raised, still not approved by Admin',
+        verifyEmail,
       };
     }
     return {
-      email: verifyEmail,
+      verifyEmail,
       status: true,
+      message:
+        'Email has been verified successfully, you can now register for free',
     };
   }
 
@@ -80,13 +91,13 @@ export class LoginController {
       };
     }
 
-    const isValidEmail = await this.loginService.validateEmail(email);
-    if (!isValidEmail) {
-      return {
-        message: 'Email is not valid, please check once',
-        status: 'fail',
-      };
-    }
+    // const isValidEmail = await this.loginService.validateEmail(email);
+    // if (!isValidEmail) {
+    //   return {
+    //     message: 'Email is not valid, please check once',
+    //     status: 'fail',
+    //   };
+    // }
     const sendMail = await this.loginService.sendPermissionEmail(email);
     if (!sendMail) {
       return {
@@ -148,9 +159,9 @@ export class LoginController {
   })
   @ApiBody({
     required: true,
-    type: RegisterDTO,
+    type: LoginDTO,
   })
-  async loginUser(@Body() loginData: RegisterRequestModel) {
+  async loginUser(@Body() loginData: LoginModel) {
     const loggedInUser = await this.loginService.loginUser(loginData);
     return loggedInUser;
   }
@@ -162,15 +173,15 @@ export class LoginController {
   })
   @ApiBody({
     required: true,
-    type: VerifyEmailDTO,
+    type: RequestAccessDTO,
   })
-  async updateAccessRequest(@Body() body: LoginModel) {
-    const { email } = body;
+  async updateAccessRequest(@Body() body: RequestAccessModel) {
+    const { email, isAdmin } = body;
     const status = REQUEST_STATUS.ACTIVE;
     const updatedPermission = await this.loginService.updateRequestUserStatus(
       email,
       status,
-      false,
+      isAdmin,
     );
     return updatedPermission;
   }
@@ -208,5 +219,26 @@ export class LoginController {
       password,
     );
     return updatedLoginCredential;
+  }
+
+  @Patch('/image/:email')
+  @ApiOkResponse({
+    description: 'User detail has been updated successfully',
+    type: RegisterDTO,
+  })
+  @ApiBody({
+    required: true,
+    type: UpdateImageDTO,
+  })
+  async updateProfileImageId(
+    @Param('email') email: string,
+    @Body() image: UpdateImageDTO,
+  ) {
+    const { profileImageId } = image;
+    const updatedImageId = await this.loginService.updateProfileImageId(
+      email,
+      profileImageId,
+    );
+    return updatedImageId;
   }
 }

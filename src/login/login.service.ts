@@ -4,7 +4,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Model } from 'mongoose';
 import { AuthService } from 'src/auth/auth.service';
 import {
-  RegisterRequestModel,
+  LoginModel,
   RegisterResponseModel,
   RequestAccessModel,
 } from './login.model';
@@ -31,19 +31,22 @@ export class LoginService {
     const getLoginData = await this.findUserByEmail(email);
     if (getLoginData) {
       return {
-        message: 'Email Id Already Registered',
+        message: 'Email Id Already Registered, please login',
+        status: 'fail',
       };
     }
     const passwordHash = await this.authService.hashPassword(password);
     const newRegister = new this.registerModel();
-    newRegister.firstName = firstName;
-    newRegister.lastName = lastName;
+    newRegister.firstName = firstName.trim();
+    newRegister.lastName = lastName.trim();
     newRegister.email = email;
     newRegister.password = passwordHash;
     newRegister.profileName = profileName.toLowerCase();
     const result = await newRegister.save();
     return {
-      message: 'User credential has been registered successfully',
+      message:
+        'Profile has been registered successfully, please login to complete your detail.',
+      status: 'success',
       firstName: result.firstName,
       lastName: result.lastName,
       email: result.email,
@@ -52,12 +55,14 @@ export class LoginService {
     };
   }
 
-  async loginUser(loginData: RegisterRequestModel) {
+  async loginUser(loginData: LoginModel) {
     const { email, password } = loginData;
     const getLoggedInUser = await this.findUserByEmail(email);
     if (!getLoggedInUser) {
       return {
-        message: 'Email id does not exists, please register',
+        message:
+          'Email id does not exists, please register to access your dashboard.',
+        status: 'fail',
       };
     }
 
@@ -68,7 +73,7 @@ export class LoginService {
 
     if (!isValidUser) {
       return {
-        message: 'Wrong Credential',
+        message: 'Invalid Credential, please try again with valid one.',
         status: 'fail',
       };
     }
@@ -76,6 +81,14 @@ export class LoginService {
     return {
       access_token: generatedToken,
       status: 'success',
+      message: 'User has been logged in successfully',
+      userDetail: {
+        firstName: getLoggedInUser.firstName,
+        lastName: getLoggedInUser.lastName,
+        email: getLoggedInUser.email,
+        profileName: getLoggedInUser.profileName,
+        profileImageId: getLoggedInUser.profileImageId,
+      },
     };
   }
 
@@ -127,7 +140,6 @@ export class LoginService {
 
   async getInActiveUser() {
     const allRequestUser = await this.requestAccessModel.find();
-    console.log(allRequestUser);
     return allRequestUser.filter((user) => user.status === 'In_Active');
   }
 
@@ -147,8 +159,30 @@ export class LoginService {
       requestUser.isAdmin = isAdmin;
     }
 
-    const updatedUser = await requestUser.save();
-    return updatedUser;
+    const grantedMail = await this.sendGrantedAccessMail(email);
+    if (grantedMail) {
+      const updatedUser = await requestUser.save();
+      return {
+        message: 'Mail send successfully and Permission has been granted',
+        user: updatedUser,
+      };
+    }
+    return {
+      message: 'Mail does not send, something went wrong',
+      status: 'fail',
+    };
+  }
+
+  async updateProfileImageId(email, imageId) {
+    const getProfileUser = await this.findUserByEmail(email);
+    if (imageId) {
+      getProfileUser.profileImageId = imageId;
+    }
+    const saveRegisterDetail = await getProfileUser.save();
+    return {
+      message: 'Profile Image has been set successfully',
+      profileImageId: saveRegisterDetail.profileImageId,
+    };
   }
 
   async findRequestEmail(email: string) {
@@ -198,6 +232,23 @@ export class LoginService {
         from: process.env.REQUEST_ACCESS_EMAIL,
         subject: 'Grant Permission to access PORTFOLIO Portal ✔',
         template: 'index',
+      })
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
+  }
+
+  async sendGrantedAccessMail(email: string) {
+    return this.mailerService
+      .sendMail({
+        to: email,
+        bcc: process.env.REQUEST_ACCESS_EMAIL,
+        from: process.env.REQUEST_ACCESS_EMAIL,
+        subject: 'Permission has been granted to PORTFOLIO Portal ✔',
+        template: 'grantedMail',
       })
       .then(() => {
         return true;
